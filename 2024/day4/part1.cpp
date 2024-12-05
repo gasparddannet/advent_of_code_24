@@ -18,8 +18,6 @@ void print_mat(vector<vector<char>> matrix) {
 }
 
 void check_word(vector<vector<char>> matrix, int& res, int i1, int j1, int i2, int j2, int i3, int j3) {
-    int n = matrix.size();
-    int m = matrix[0].size();
     if (matrix[i1][j1] == 'M') {
         if (matrix[i2][j2] == 'A') {
             if (matrix[i3][j3] == 'S') {
