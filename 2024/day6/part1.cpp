@@ -9,7 +9,9 @@
 
 using namespace std;
 
-void print_map(vector<vector<char>> map) {
+pair<vector<vector<char>>, int> rec_path(vector<vector<char>>& map, int i, int j, int res);
+
+void print_map(vector<vector<char>>& map) {
     for (vector<char> line : map) {
         for (char c : line) {
             cout << c;
@@ -18,7 +20,26 @@ void print_map(vector<vector<char>> map) {
     }
 }
 
-pair<vector<vector<char>>, int> rec_path(vector<vector<char>> map, int i, int j, int res) {
+pair<vector<vector<char>>, int> move_guard(vector<vector<char>>& map, int i, int j, int ni, int nj,char g, char ng, int res) {
+    if (map[ni][nj] == '.') {
+        map[i][j] = 'X';
+        map[ni][nj] = g;
+        return rec_path(map, ni, nj, res+1);
+    }
+    else if (map[ni][nj] == 'X') {
+        map[i][j] = 'X';
+        map[ni][nj] = g;
+        return rec_path(map, ni, nj, res);
+    }
+    else if (map[ni][nj] == '#') {
+        map[i][j] = ng;
+        return rec_path(map, i, j, res);
+    }
+    string err = "Invalid next case: ";
+    throw invalid_argument(err + map[ni][nj]);
+}  
+
+pair<vector<vector<char>>, int> rec_path(vector<vector<char>>& map, int i, int j, int res) {
     int n = map.size();
     int m = map[0].size();
     char guard = map[i][j];
@@ -43,71 +64,16 @@ pair<vector<vector<char>>, int> rec_path(vector<vector<char>> map, int i, int j,
         return make_pair(map, res+1);
     }
 
-    if (guard == '^' && map[i-1][j] == '.') {
-        map[i][j] = 'X';
-        map[i-1][j] = '^';
-        return rec_path(map, i-1, j, res+1);
+    switch (guard) {
+        case '^': return move_guard(map,i,j,i-1,j,'^','>', res);
+        case '>': return move_guard(map,i,j,i,j+1,'>','v', res);
+        case 'v': return move_guard(map,i,j,i+1,j,'v','<', res);
+        case '<': return move_guard(map,i,j,i,j-1,'<','^', res);
+        default: throw invalid_argument("missing guard !?");
     }
-    else if (guard == '^' && map[i-1][j] == 'X') {
-        map[i][j] = 'X';
-        map[i-1][j] = '^';
-        return rec_path(map, i-1, j, res);
-    }
-    else if (guard == '^' && map[i-1][j] == '#') {
-        map[i][j] = '>';
-        return rec_path(map, i, j, res);
-    }
-    else if (guard == '>' && map[i][j+1] == '.') {
-        map[i][j] = 'X';
-        map[i][j+1] = '>';
-        return rec_path(map, i, j+1, res+1);
-    }
-    else if (guard == '>' && map[i][j+1] == 'X') {
-        map[i][j] = 'X';
-        map[i][j+1] = '>';
-        return rec_path(map, i, j+1, res);
-    }
-    else if (guard == '>' && map[i][j+1] == '#') {
-        map[i][j] = 'v';
-        return rec_path(map, i, j, res);
-    }
-    else if (guard == 'v' && map[i+1][j] == '.') {
-        map[i][j] = 'X';
-        map[i+1][j] = 'v';
-        return rec_path(map, i+1, j, res+1);
-    }
-    else if (guard == 'v' && map[i+1][j] == 'X') {
-        map[i][j] = 'X';
-        map[i+1][j] = 'v';
-        return rec_path(map, i+1, j, res);
-    }
-    else if (guard == 'v' && map[i+1][j] == '#') {
-        map[i][j] = '<';
-        return rec_path(map, i, j, res);
-    }
-    else if (guard == '<' && map[i][j-1] == '.') {
-        map[i][j] = 'X';
-        map[i][j-1] = '<';
-        return rec_path(map, i, j-1, res+1);
-    }
-    else if (guard == '<' && map[i][j-1] == 'X') {
-        map[i][j] = 'X';
-        map[i][j-1] = '<';
-        return rec_path(map, i, j-1, res);
-    }
-    else if (guard == '<' && map[i][j-1] == '#') {
-        map[i][j] = '^';
-        return rec_path(map, i, j, res);
-    }
-
-    throw invalid_argument("missing guard !?");
 }
 
-// int cond(vector<vector<char>> map, int i, int j, int res) {
-
-// }
-
-pair<vector<vector<char>>, int> path(vector<vector<char>> map, int i, int j) {
+pair<vector<vector<char>>, int> path(vector<vector<char>>& map, int i, int j) {
     return rec_path(map, i, j, 0);
 }
 
@@ -145,13 +111,6 @@ int main() {
     while (getline(file, line)) {
         for (int j=0; j<line.length();j++) {
             l.push_back(line[j]);
-            // if (line[j] == '^') {
-            //     check_nb_guards(find);
-            //     find = true;
-            //     posi = i;
-            //     posj = j;
-            //     dir = "up";
-            // }
             if (check_guard(line[j], '^', rfind)) {
                 posi = i; posj = j;
             }
@@ -164,7 +123,6 @@ int main() {
             if (check_guard(line[j], 'v', rfind)) {
                 posi = i; posj = j;
             }
-
         }
         i+=1;
         map.push_back(l);
@@ -177,9 +135,9 @@ int main() {
     cout << "posj: " << posj << endl;
     // cout << "dir: " << dir << endl;
 
-
     pair<vector<vector<char>>, int> res = path(map, posi, posj);
     print_map(res.first);
     cout << "result: " << res.second << endl;
+
     return 0;
 }
