@@ -11,7 +11,7 @@
 
 using namespace std;
 
-tuple<vector<vector<char>>, int, bool> rec_path(vector<vector<char>>& map, int i, int j, int res,vector<pair<int,int>>& vect_block);
+tuple<vector<vector<char>>, int, bool> rec_path(vector<vector<char>>&, int, int, int,vector<pair<int,int>>&);
 
 void print_map(vector<vector<char>>& map) {
     for (vector<char> line : map) {
@@ -22,34 +22,15 @@ void print_map(vector<vector<char>>& map) {
     }
 }
 
-bool check_loop(char g, char n) {
-    char fg;
-    switch (g) {
-        case '^': fg = 'u';break;
-        case '>': fg = 'r';break;
-        case 'v': fg = 'd';break;
-        case '<': fg = 'l';break;
-        default: string err = "invalid guard: ";throw invalid_argument(err+g);
-    }
-
-    if (fg == n) {
-        return true;
-    }
-    return false;
-}
-
 tuple<vector<vector<char>>, int, bool> move_guard(vector<vector<char>>& map, int i, int j, 
-                            int ni, int nj,char g, char ng, char fg, int res, vector<pair<int,int>>& vect_block) {
-    if (check_loop(g, map[ni][nj])) {
-        return make_tuple(map, res, false);
-    }
-    else if (map[ni][nj] == '.') {
-        map[i][j] = fg;
+                            int ni, int nj,char g, char ng, int res, vector<pair<int,int>>& vect_block) {
+    if (map[ni][nj] == '.') {
+        map[i][j] = 'X';
         map[ni][nj] = g;
         return rec_path(map, ni, nj, res+1,vect_block);
     }
-    else if ((map[ni][nj] == 'u') || (map[ni][nj] == 'r')|| (map[ni][nj] == 'd')|| (map[ni][nj] == 'l')) {
-        map[i][j] = fg;
+    else if (map[ni][nj] == 'X') {
+        map[i][j] = 'X';
         map[ni][nj] = g;
         return rec_path(map, ni, nj, res,vect_block);
     }
@@ -58,7 +39,7 @@ tuple<vector<vector<char>>, int, bool> move_guard(vector<vector<char>>& map, int
         vect_block.push_back(p);
         int c = count(vect_block.begin(), vect_block.end(), p);
         if (c >= 3) {
-            cout << "count blocks, " << i << ", "<<j<<": "<<c<<endl;
+            // cout << "count blocks, " << i << ", "<<j<<": "<<c<<endl;
             return make_tuple(map, res, false);
         }
         map[i][j] = ng;
@@ -95,10 +76,10 @@ tuple<vector<vector<char>>, int, bool> rec_path(vector<vector<char>>& map, int i
     }
 
     switch (guard) {
-        case '^': return move_guard(map,i,j,i-1,j,'^','>','u',res,vect_block);
-        case '>': return move_guard(map,i,j,i,j+1,'>','v','r',res,vect_block);
-        case 'v': return move_guard(map,i,j,i+1,j,'v','<','d',res,vect_block);
-        case '<': return move_guard(map,i,j,i,j-1,'<','^','l',res,vect_block);
+        case '^': return move_guard(map,i,j,i-1,j,'^','>',res,vect_block);
+        case '>': return move_guard(map,i,j,i,j+1,'>','v',res,vect_block);
+        case 'v': return move_guard(map,i,j,i+1,j,'v','<',res,vect_block);
+        case '<': return move_guard(map,i,j,i,j-1,'<','^',res,vect_block);
         default: throw invalid_argument("missing guard !?");
     }
 }
@@ -168,11 +149,10 @@ int main() {
     }
 
     print_map(map);
-    cout << "find: " << rfind << endl;
-    cout << "posi: " << posi << endl;
-    cout << "posj: " << posj << endl;
+    // cout << "find: " << rfind << endl;
+    // cout << "posi: " << posi << endl;
+    // cout << "posj: " << posj << endl;
     // cout << "dir: " << dir << endl;
-
 
     int nb_loop = 0;
     int n = map.size();
@@ -186,7 +166,6 @@ int main() {
                 tuple<vector<vector<char>>, int, bool> res = path(map, posi, posj);
                 if (!(get<2>(res))) {
                     nb_loop+=1;
-                    cout << "nb_loop: " << nb_loop << endl;
                 }
                 map[i][j] = '.';
             }
@@ -194,6 +173,5 @@ int main() {
     }
 
     cout << "result: " << nb_loop << endl;
-
     return 0;
 }
