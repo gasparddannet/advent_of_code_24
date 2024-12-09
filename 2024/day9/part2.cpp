@@ -20,7 +20,6 @@ void print_disk(vector<string>& disk) {
 
 void add_string(int nb, string& s, vector<string>& disk) {
     for (int i=0;i<nb;i++) {
-        // disk_map+=c;
         disk.push_back(s);
     }
 }
@@ -30,28 +29,29 @@ int chr_to_int(char& c) {
     return i;
 }
 
-char* int_to_chr(int &i) {
-    int length = to_string(i).length();
-    char* nchar = new char[length];
-    to_chars(nchar, nchar+length, i);
-    return nchar;
-}
-
-void move_block(int &i, vector<string>& disk) {
-    string tmp = disk[i];
-    if (tmp != ".") {
-        for (int j=0;j<i;j++) {
-            if (disk[j]==".") {
-                disk[i] = ".";
-                disk[j] = tmp;
+void move_block(int lb, int &rb, vector<string>& disk) {
+    int size_block = rb-lb+1;
+    int j;
+    for (int i=0;i<lb-1;) {
+        j=i+1;
+        if (disk[i] == ".") {
+            while (disk[j] ==".") {
+                j++;
+            }
+            if (j-i >= size_block) {
+                for (int k=0;k<size_block;k++) {
+                    disk[i+k] = disk[lb+k];
+                    disk[lb+k] = ".";
+                }
                 break;
             }
         }
+        i=j;
     }
 }
 
 int main() { 
-    ifstream file("input.txt");
+    ifstream file("example3");
 
     if (!file.is_open()) {
         cout << "Could not open file!\n";
@@ -66,43 +66,49 @@ int main() {
     vector<string> disk;
 
     getline(file, line);
-    // cout << "line:\t"<<line<<endl;
     for (long unsigned int k=0; k<line.length();k++) {
         nb = chr_to_int(line[k]);
-        // cout << "nb: "<<nb<<": ";
         if (free_space) {
-            // cout << "."<<endl;
             add_string(nb,point,disk);
             free_space = false;
         }
         else {
             s = to_string(id);
-            // cout <<s<<endl;
             add_string(nb,s,disk);
             free_space = true;
             id++;
         }
     }
 
-    // cout << "disk"<<endl;
-    // print_disk(disk);
+    cout << "disk"<<endl;
+    print_disk(disk);
 
+    string id_str;
+    string tmp;
     const int size = disk.size();
-    for (int i=size-1;i>=0;i--) {
-        move_block(i, disk);
+    int j;
+    for (int i=size-1;i>0;) {
+        id_str = disk[i];
+        j=i-1;
+        if (id_str!=".") {
+            tmp = disk[j];
+            while (tmp==id_str && j>0) {
+                j--;
+                tmp = disk[j];
+            }
+            move_block(j+1, i, disk);
+        }
+        i=j;
     }
-    // cout << "move disk:";
-    // print_disk(disk);
-
-    long double res=0;
-    string it = disk[0];
-    int i=0;
+    cout << "move disk:"<<endl;
+    print_disk(disk);
     int n;
-    while (it != ".") {
-        n = stoi(it);
-        res += n*i;
-        i++;
-        it = disk[i];
+    long double res=0;
+    for (int i=0;i<size;i++) {
+        if (disk[i]!=".") {
+            n = stoi(disk[i]);
+            res += n*i;
+        }
     }
     
     cout << "result: "<<res<<endl;
