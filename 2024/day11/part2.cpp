@@ -15,19 +15,6 @@
 
 using namespace std;
 
-
-struct hash_pair { 
-  
-    template <class T1, class T2> 
-    size_t operator()(const pair<T1, T2>& p) const
-    { 
-        size_t hash1 = hash<T1>{}(p.first);
-        size_t hash2 = hash<T2>{}(p.second);
-        return hash1 ^ (hash2 + 0x9e3779b9 + (hash1 << 6) + (hash1 >> 2));
-    } 
-}; 
-
-
 void print_stones(vector<string>& stones) {
     for (string& s:stones) {
         cout << s<<" ";
@@ -44,47 +31,30 @@ void remove_forwarding_zeros(string& s) {
     }
 }
 
-bool check_key(unordered_map<pair<string,int>, int,hash_pair> m, pair<string,int> key)
-{
-    if (m.find(key) != m.end())
-        return true;
-    return false;
-}
-
-long unsigned int rec_blink_stone(string s, int nb_blinking, unordered_map<pair<string,int>, int,hash_pair>& hash_map, int& nb_found) {
-    long unsigned int num;
+list<string> blink(string& s) {
+    long long int num;
     string new_stone1, new_stone2;
-    long unsigned int val;
-    if (nb_blinking==0) {
-        return 1;
-    }
-    if (check_key(hash_map, make_pair(s,nb_blinking))) {
-        // cout << "found"<<endl;
-        nb_found++;
-        return hash_map[make_pair(s,nb_blinking)];
-    }   
+    list<string> lst_new_stone;
+
     if (s == "0") {
-        // new_stone1 = "1";
-        val = rec_blink_stone("1", nb_blinking-1,hash_map, nb_found);
+        lst_new_stone.push_back("1");
+        return lst_new_stone;
     }
     else if (s.length() % 2 ==0) {
         new_stone1 = s.substr(0,s.length()/2);
         remove_forwarding_zeros(new_stone1);
-        // res++;
+        lst_new_stone.push_back(new_stone1);
         new_stone2 = s.substr(s.length()/2);
         remove_forwarding_zeros(new_stone2);
-        val = rec_blink_stone(new_stone1, nb_blinking-1,hash_map, nb_found)+
-                rec_blink_stone(new_stone2, nb_blinking-1,hash_map, nb_found);
-
-        // rec_blink_stone(new_stone2, res, nb_blinking-1);
+        lst_new_stone.push_back(new_stone2);
+        return lst_new_stone;
     }
     else {
-        num = stoul(s);
+        num = stoll(s);
         new_stone1 = to_string(2024*num);
-        val = rec_blink_stone(new_stone1, nb_blinking-1,hash_map, nb_found);
+        lst_new_stone.push_back(new_stone1);
+        return lst_new_stone;
     }
-    hash_map.insert({make_pair(s,nb_blinking),val});
-    return val;
 }
 
 int main(int argc, char** argv) { 
@@ -107,23 +77,47 @@ int main(int argc, char** argv) {
     print_stones(stones);
 
     int nb_blinking = stoi(argv[1]);
-    long unsigned int res=0;
-    int nb_found=0;
     auto start = chrono::high_resolution_clock::now();
-    unordered_map<pair<string,int>, int, hash_pair> hash_map;
-    // map<pair<string,int>, int> map;
-
+    map<string, long long int> hash_map;
+    
     for (string& stone:stones) {
-        res+=rec_blink_stone(stone, nb_blinking, hash_map, nb_found);
+        if (hash_map.find(stone) != hash_map.end()) {
+            hash_map[stone]++;
+        }
+        else {
+            hash_map.insert({stone, 1});
+        }
     }
+
+    list<string> lst_new_stone;
+    for (int i=0;i<nb_blinking;i++) {
+        map<string, long long int> tmp_hash_map;
+
+        for (auto p: hash_map) {
+            string stone = p.first;
+            lst_new_stone = blink(stone);
+            for (string& s:lst_new_stone) {
+                if (tmp_hash_map.find(s) != tmp_hash_map.end()) {
+                    tmp_hash_map[s]+= p.second;
+                }
+                else {
+                    tmp_hash_map.insert({s, p.second});
+                }
+            }
+        }
+        hash_map = tmp_hash_map;
+    }
+
     auto stop = chrono::high_resolution_clock::now();
 
+    long long res=0;
+    for (auto p:hash_map) {
+        res+=p.second;
+    }
     cout << "result: " <<res<<endl;
-    printf("%20.lu\n",res);
-    cout << "nb_found: " <<nb_found<<endl;
+    printf("%20.llu\n",res);
     auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
     cout << "time: "<<duration.count() <<"ms"<< endl;
-    cout << "time: "<<duration.count()/1000 <<"s"<< endl;
 
     return 0;
 }
