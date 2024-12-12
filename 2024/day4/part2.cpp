@@ -1,13 +1,10 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include <sstream>
-#include <regex>
 #include <cassert>
 #include <vector>
 
 using namespace std;
-
 
 int minus_one(int i) {
     return i-1;
