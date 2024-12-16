@@ -22,58 +22,6 @@ void print_map(vector<vector<char>>& map) {
     cout << endl;
 }
 
-// long move(vector<vector<char>>& map, int i, int j, long res, int acci, int accj,set<pair<int,int>> set_mvt) {
-//     cout << "i, j: "<<i<<", "<<j<< ", acci, accj: "<<acci<<", "<<accj<<endl;
-//     if (map[i][j]=='E') {
-//         return res;
-//     }
-//     // if (map[i][j]=='#') {
-//     //     return LONG_MAX;
-//     // }
-//     long rl=LONG_MAX;
-//     long ud=LONG_MAX;
-//     long u=LONG_MAX;
-//     long d=LONG_MAX;
-//     long r=LONG_MAX;
-//     long l=LONG_MAX;
-//     if (acci==0) {
-//         pair<int,int> nxtRL=make_pair(i,j+accj);
-//         pair<int,int> nxtU=make_pair(i+1,j);
-//         pair<int,int> nxtD=make_pair(i-1,j);
-//         if (map[i][j+accj]!='#' && set_mvt.count(nxtRL)==0) {
-//             set_mvt.insert(nxtRL);
-//             rl=move(map, i,j+accj,res+1,0,accj,set_mvt);
-//         } 
-//         if (map[i+1][j]!='#'&& set_mvt.count(nxtU)==0) {
-//             set_mvt.insert(nxtU);
-//             u=move(map, i+1,j,res+1001,1,0,set_mvt);
-//         }    
-//         if (map[i-1][j]!='#'&& set_mvt.count(nxtD)==0) {
-//             set_mvt.insert(nxtD);
-//             d=move(map, i-1,j,res+1001,-1,0,set_mvt);
-//         }
-//         return min(rl,min(u,d));
-//     }
-//     else {
-//         pair<int,int> nxtUD=make_pair(i+acci,j);
-//         pair<int,int> nxtR=make_pair(i,j+1);
-//         pair<int,int> nxtL=make_pair(i,j-1);
-//         if (map[i+acci][j]!='#'&& set_mvt.count(nxtUD)==0) {
-//             set_mvt.insert(nxtUD);
-//             ud=move(map, i+acci,j,res+1,acci,0,set_mvt);
-//         } 
-//         if (map[i][j+1]!='#'&& set_mvt.count(nxtR)==0) {
-//             set_mvt.insert(nxtR);
-//             r=move(map, i,j+1,res+1001, 0,1,set_mvt);
-//         }    
-//         if (map[i][j-1]!='#'&& set_mvt.count(nxtL)==0) {
-//             set_mvt.insert(nxtL);
-//             l=move(map, i,j-1,res+1001,0,-1,set_mvt);
-//         }
-//         return min(ud,min(r,l));
-//     }
-// }
-
 list<tuple<int,int, int,int,int>> lst_next(vector<vector<char>>& map,int i, int j, int acci, int accj) {
     list<tuple<int,int,int,int,int>> lst_next_pos;
     if (acci==0) {
@@ -101,7 +49,7 @@ list<tuple<int,int, int,int,int>> lst_next(vector<vector<char>>& map,int i, int 
     return lst_next_pos;
 }
 
-long bfs(vector<vector<char>>& map, int iStart, int jStart, int iEnd, int jEnd) 
+vector<vector<pair<long,set<pair<int,int>>>>> bfs(vector<vector<char>>& map, int iStart, int jStart) 
 {
     // Create a queue for BFS
     queue<tuple<int,int,int,int,int>> q;  
@@ -109,9 +57,14 @@ long bfs(vector<vector<char>>& map, int iStart, int jStart, int iEnd, int jEnd)
     // Initially mark all the vertices as not visited
     // When we push a vertex into the q, we mark it as 
     // visited
-    vector<vector<long>> visited;
+    vector<vector<pair<long,set<pair<int,int>>>>> visited;
     for (unsigned long i=0; i<map.size();i++) {
-        vector<long> line_visited(map[0].size(), LONG_MAX);
+        vector<pair<long,set<pair<int,int>>>> line_visited; //(map[0].size(), LONG_MAX);
+        for (unsigned long j=0; j<map[0].size();j++) {
+            set<pair<int,int>> s;
+            pair<long,set<pair<int,int>>> p = make_pair(LONG_MAX, s);
+            line_visited.push_back(p);
+        }
         visited.push_back(line_visited);
     }
 
@@ -119,7 +72,7 @@ long bfs(vector<vector<char>>& map, int iStart, int jStart, int iEnd, int jEnd)
     // enqueue it
     int acci=0;
     int accj=1;
-    visited[iStart][jStart] = 0;
+    visited[iStart][jStart].first = 0;
     q.push(make_tuple(iStart,jStart, acci, accj,0));
 
     // Iterate over the queue
@@ -146,18 +99,55 @@ long bfs(vector<vector<char>>& map, int iStart, int jStart, int iEnd, int jEnd)
             nj=get<1>(t);
             nacci=get<2>(t);
             naccj=get<3>(t);
-            long old_w = visited[ni][nj];
-            if (new_w < old_w) {
-                visited[ni][nj]=new_w;
+            long old_w = visited[ni][nj].first;
+            set<pair<int,int>> s = visited[ni][nj].second;
+            auto p=s.begin();
+            if (new_w+1000 == old_w && map[ni+nacci][nj+naccj]=='#') {
+                cout << "2ni,nj: "<<ni <<", "<<nj<<endl;
+                cout << "2i,j: "<<i <<", "<<j<<endl;
+                cout << new_w<<", "<<old_w<<endl;
+                visited[ni][nj].second.insert(make_pair(i,j));
+                q.push(make_tuple(ni,nj,nacci,naccj,new_w));
+            }
+            else if (new_w == old_w+1000 && map[ni+(ni-(*p).first)][nj+(ni-(*p).second)]=='#') {
+                cout << "3ni,nj: "<<ni <<", "<<nj<<endl;
+                cout << "3i,j: "<<i <<", "<<j<<endl;
+                cout << new_w<<", "<<old_w<<endl;
+                visited[ni][nj].second.insert(make_pair(i,j));
+                q.push(make_tuple(ni,nj,nacci,naccj,new_w));
+            }
+
+            else if (new_w < old_w) {
+                cout << "1ni,nj: "<<ni <<", "<<nj<<endl;
+                cout << "1i,j: "<<i <<", "<<j<<endl;
+                cout << new_w<<", "<<old_w<<endl;
+                visited[ni][nj].first=new_w;
+                set<pair<int,int>> s{make_pair(i,j)};
+                visited[ni][nj].second = s;
                 q.push(make_tuple(ni,nj,nacci,naccj,new_w));
             }
         }
     }
-    return visited[iEnd][jEnd];
+    // return visited[iEnd][jEnd].first;
+    return visited;
+}
+
+void get_nb_seats(vector<vector<pair<long,set<pair<int,int>>>>>& visited, int i, int j, int iStart, int jStart,set<pair<int,int>>& track) {
+
+    if (i==iStart && j==jStart) {
+        track.insert(make_pair(i,j));
+    }
+    
+    set<pair<int,int>> lst = visited[i][j].second;
+    for (pair<int,int> p:lst) {
+        track.insert(make_pair(p.first,p.second));
+        get_nb_seats(visited,p.first,p.second, iStart, jStart,track);
+
+    }
 }
 
 int main() {
-    ifstream file("input.txt");
+    ifstream file("example2");
 
     if (!file.is_open()) {
     cout << "Could not open file!\n";
@@ -189,14 +179,32 @@ int main() {
 
     auto start = chrono::high_resolution_clock::now();
     print_map(map);
-    // cout << iStart<<", "<<jStart<<endl;
     set<pair<int,int>> set_mvt;
-    // long res = move(map,iStart,jStart,0,0,1,set_mvt);
-    long res = bfs(map,iStart,jStart,iEnd, jEnd);
+    vector<vector<pair<long,set<pair<int,int>>>>> visited = bfs(map,iStart,jStart);
+    long res = visited[iEnd][jEnd].first;
+
+    ofstream myfile;
+    set<pair<int,int>> set_track{make_pair(iEnd, jEnd)};
+    get_nb_seats(visited, iEnd, jEnd, iStart, jStart,set_track);
+
+    // set<pair<int,int>> l1 = visited[7][5].second;
+    // set<pair<int,int>> l1 = visited[9][3].second;
+    set<pair<int,int>> l1 = visited[10][3].second;
+    // set<pair<int,int>> l1 = visited[iEnd][jEnd].second;
+    for (pair<int,int> p:l1) {
+        cout << p.first<<", "<<p.second<<endl;
+    }
+
+    for (pair<int,int> p:set_track) {
+        map[p.first][p.second]='0';
+    }
+
+    print_map(map);
 
     auto stop = chrono::high_resolution_clock::now();
 
     cout << "result: " <<res<<endl;
+    cout << "nb_seats: "<<set_track.size()<<endl;
     // printf("%20.llu\n",res);
     auto duration = chrono::duration_cast<chrono::milliseconds>(stop - start);
     cout << "time: " << duration.count() << "ms" << endl;
